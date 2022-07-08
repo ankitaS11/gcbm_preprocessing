@@ -7,7 +7,7 @@ import rasterio
 
 class GCBMList:
     """
-    This is a base class for GCBM pre-processing scripts to use. It prevents users to do: <config>.append(<anything that is not a file>)
+    This is a base class for GCBM pre-processing scripts to use. It prevents users to do: <config>._append(<anything that is not a file>)
     """
     def __init__(self, category=None):
         self.data = list()
@@ -22,19 +22,19 @@ class GCBMList:
 
     def is_category(self, path):
         if self.category is None:
-            raise NotImplementedError("Please implement `is_category` method, which is used by append() method")
+            raise NotImplementedError("Please implement `is_category` method, which is used by _append() method")
         else:
             return self.category in path
 
-    # Unlike list.append() in Python, this returns a bool - whether it was successful or not
-    def append(self, file_path):
+    # Unlike list.append() in Python, this returns a bool - whether the append was successful or not + checks if the file path is of the current category
+    def _append(self, file_path):
         if self.is_category(file_path):
             self.data.append(file_path)
             return True
         return False
     
-    def update_config(self):
-        raise NotImplementedError("Need a `update_config` method here.")
+    def _update_config(self):
+        raise NotImplementedError("Need a `_update_config` method here.")
 
     def generate_config(self):
         raise NotImplementedError("Need a `generate_config` method here.")
@@ -53,7 +53,7 @@ class GCBMDisturbanceList(GCBMList):
         self.config = config
         super().__init__(category=category)
 
-    def update_config(self):
+    def _update_config(self):
         for raster_file_path in self.data:
             json_config_file_path = GCBMList.change_extension(raster_file_path, ".json")
 
@@ -97,13 +97,12 @@ class GCBMDisturbanceList(GCBMList):
             config["has_year"] = True
 
         self.files[file] = config
-        self.update_config()
+        self._update_config()
 
 
 class GCBMClassifiersList:
     def __init__(self, files, config):
         pass
-
 
 class GCBMSimulation:
     def __init__(self):
@@ -142,10 +141,21 @@ class GCBMSimulation:
                 # TODO: This should not happen here? maybe connect an endpoint directly to the sync_config method
                 # self.sync_config(abs_filepath)
     
-    def add_file(self, file_path):
-        if self.disturbances.append(file_path):
-            self.disturbances.update_config()
-        # if self.classifiers.append(file_path):
+    # file_path: disturbances (NOT MUST), classifiers (MUST), miscellaneous (MUST)
+    def add_file(self, file_path: str):
+        """
+        This function:
+
+            1. Checks if the given file is one of the categories: registers, classifiers, and miscellaneous.
+            2. The provided file path to the buffer, and updates the config (JSON).
+
+        Parameters
+        ==========
+        1. file_path (str), no default
+        """
+        if self.disturbances._append(file_path):
+            self.disturbances._update_config()
+        # if self.classifiers._append(file_path):
         #     self.update_classifier_config()
         # TODO: Add covariates here
 
@@ -166,7 +176,7 @@ class GCBMSimulation:
             self.files[file_path] = data
 
     def update_disturbance_config(self):
-        self.disturbances.update_config()
+        self.disturbances._update_config()
 
     def set_disturbance_attributes(self, file, payload):
         self.disturbances.setattr(file, payload)
@@ -188,11 +198,14 @@ class GCBMSimulation:
 if __name__ == "__main__":
     sim = GCBMSimulation()
     sim.add_file("disturbances/disturbances_2011_moja.tiff")
-    sim.update_disturbance_config()
+    # this^ generates disturbances_2011_moja.json file, which will contain the metadata from .tiff
+
     # Sample payload to test
+    # If you want to add something of your own to the json file above, you can do this:
     payload = {
-        "year": 2011,
+        "year": 2012,
         "disturbance_type": "Wildfire",
+        "random_thing": [1,2,3,4],
         "transition": 1
     }
     sim.set_disturbance_attributes("disturbances/disturbances_2011_moja.tiff", payload)
