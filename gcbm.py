@@ -9,9 +9,10 @@ class GCBMList:
     """
     This is a base class for GCBM pre-processing scripts to use. It prevents users to do: <config>._append(<anything that is not a file>)
     """
-    def __init__(self, category=None):
+    def __init__(self, files=dict(), config=[], category=None):
         self.data = list()
-        self.config = list()
+        self.files = files
+        self.config = config
         self.category = category
 
     def __iter__(self):
@@ -32,26 +33,6 @@ class GCBMList:
             self.data.append(file_path)
             return True
         return False
-    
-    def _update_config(self):
-        raise NotImplementedError("Need a `_update_config` method here.")
-
-    def generate_config(self):
-        raise NotImplementedError("Need a `generate_config` method here.")
-
-    @staticmethod
-    def change_extension(file_path, new_extension):
-        # TODO: let's use pathlib.Path everywhere, for now it's okay here
-        pathlib_path = pathlib.Path(file_path)
-        return pathlib_path.with_suffix(new_extension)
-
-
-class GCBMDisturbanceList(GCBMList):
-    def __init__(self, files, config):
-        category = "disturbances"
-        self.files = files
-        self.config = config
-        super().__init__(category=category)
 
     def _update_config(self):
         for raster_file_path in self.data:
@@ -61,7 +42,6 @@ class GCBMDisturbanceList(GCBMList):
                 self.generate_config(os.path.abspath(raster_file_path), json_config_file_path)
             else:
                 with open(f"templates/config/{json_config_file_path.name}", "r+") as _file:
-                    # config = json.load(_file)
                     json.dump(self.files[os.path.abspath(raster_file_path)], _file, indent=4)
 
     def generate_config(self, file_path, json_config_file_path):
@@ -75,8 +55,17 @@ class GCBMDisturbanceList(GCBMList):
             else:
                 config = dict()
             with rasterio.open(file_path) as disturbance:
-                config["width"] = disturbance.width
+                tr = disturbance.transform
+                config["cellLatSize"] = tr[0]
+                config["cellLonSize"] = -tr[4]
+                config["nodata"] = disturbance.nodata
 
+            config["blockLonSize"] = config["cellLonSize"] * 400
+            config["blockLatSize"] = config["cellLatSize"] * 400
+            config["tileLatSize"] = config["cellLatSize"] * 4000
+            config["tileLonSize"] = config["cellLonSize"] * 4000
+            config["layer_type"] = "GridLayer"
+            config["layer_data"] = "Byte"
             config["has_year"] = False
             config["has_type"] = False
 
@@ -99,10 +88,28 @@ class GCBMDisturbanceList(GCBMList):
         self.files[file] = config
         self._update_config()
 
+    @staticmethod
+    def change_extension(file_path, new_extension):
+        # TODO: let's use pathlib.Path everywhere, for now it's okay here
+        pathlib_path = pathlib.Path(file_path)
+        return pathlib_path.with_suffix(new_extension)
 
-class GCBMClassifiersList:
+
+class GCBMDisturbanceList(GCBMList):
     def __init__(self, files, config):
-        pass
+        category = "disturbances"
+        self.files = files
+        self.config = config
+        super().__init__(files=files, config=config, category=category)
+
+
+class GCBMClassifiersList(GCBMList):
+    def __init__(self, files, config):
+        category = "classifiers"
+        self.files = files
+        self.config = config
+        super().__init__(category=category)
+
 
 class GCBMSimulation:
     def __init__(self):
@@ -140,7 +147,7 @@ class GCBMSimulation:
 
                 # TODO: This should not happen here? maybe connect an endpoint directly to the sync_config method
                 # self.sync_config(abs_filepath)
-    
+
     # file_path: disturbances (NOT MUST), classifiers (MUST), miscellaneous (MUST)
     def add_file(self, file_path: str):
         """
@@ -155,8 +162,10 @@ class GCBMSimulation:
         """
         if self.disturbances._append(file_path):
             self.disturbances._update_config()
-        # if self.classifiers._append(file_path):
-        #     self.update_classifier_config()
+            return
+        if self.classifiers._append(file_path):
+            self.classifiers._update_config()
+            return
         # TODO: Add covariates here
 
         # TODO
@@ -181,6 +190,12 @@ class GCBMSimulation:
     def set_disturbance_attributes(self, file, payload):
         self.disturbances.setattr(file, payload)
 
+    def update_classifier_config(self):
+        self.classifiers._update_config()
+
+    def set_classifier_attributes(self, file, payload):
+        self.classifiers.setattr(file, payload)
+
     @staticmethod
     def safe_read_json(path):
         if ".json" not in path:
@@ -198,6 +213,7 @@ class GCBMSimulation:
 if __name__ == "__main__":
     sim = GCBMSimulation()
     sim.add_file("disturbances/disturbances_2011_moja.tiff")
+    sim.add_file("classifiers/classifier1_moja.tiff")
     # this^ generates disturbances_2011_moja.json file, which will contain the metadata from .tiff
 
     # Sample payload to test
@@ -209,3 +225,4 @@ if __name__ == "__main__":
         "transition": 1
     }
     sim.set_disturbance_attributes("disturbances/disturbances_2011_moja.tiff", payload)
+    sim.set_classifier_attributes("classifiers/classifier1_moja.tiff", payload)

@@ -8,16 +8,21 @@ This script follows the pseudocode from Andrew's design to update GCBM configs: 
 * Categories supported: `disturbances`
 
 ```bash
-curl -F disturbances="@disturbances/disturbances_2011_moja.tiff" -F title="run4" http://localhost:8080/gcbm/upload
+# This uploads a classifier and disturbance file
+curl -F disturbances="@disturbances/disturbances_2011_moja.tiff" -F classifiers="@classifiers/Classifier1_moja.tiff" http://localhost:8080/gcbm/upload
+
+# Try skipping disturbance file, and it will still work :)
 ```
 
 **Expected Output:**
 
 ```bash
 {
-  "error": "Missing files for categories: ['classifiers', 'miscellaneous', 'config_files', 'input'], they are required for the simulation to run"
+  "error": "Missing files for categories: ['miscellaneous', 'config_files', 'input'], they are required for the simulation to run"
 }
 ```
+
+The outputs for classifier file and disturbance file will be stored in "templates/config/" folder.
 
 ### GCBM Pre-Processing
 

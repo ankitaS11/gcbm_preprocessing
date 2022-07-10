@@ -1,0 +1,13 @@
+{
+    "cellLatSize": 0.00025,
+    "cellLonSize": 0.00025,
+    "nodata": 255.0,
+    "blockLonSize": 0.1,
+    "blockLatSize": 0.1,
+    "tileLatSize": 1.0,
+    "tileLonSize": 1.0,
+    "layer_type": "GridLayer",
+    "layer_data": "Byte",
+    "has_year": false,
+    "has_type": false
+}
