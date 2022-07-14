@@ -111,6 +111,14 @@ class GCBMClassifiersList(GCBMList):
         super().__init__(category=category)
 
 
+class GCBMMiscellaneousList(GCBMList):
+    def __init__(self, files, config):
+        category = "miscellaneous"
+        self.files = files
+        self.config = config
+        super().__init__(category=category)
+
+
 class GCBMSimulation:
     def __init__(self):
         # create a global index
@@ -125,8 +133,7 @@ class GCBMSimulation:
 
         self.classifiers = GCBMClassifiersList(files=self.files, config=self.config)
         self.disturbances = GCBMDisturbanceList(files=self.files, config=self.config)
-        # TODO: Not sure what should be the category here (FIXME)
-        self.covariates = GCBMList(category="covariates")  # this is e.g. temperature
+        self.miscellaneous = GCBMMiscellaneousList(files=self.files, config=self.config)
 
     def create_simulation_folder(self):
         if not os.path.exists("templates/config"):
@@ -166,6 +173,9 @@ class GCBMSimulation:
         if self.classifiers._append(file_path):
             self.classifiers._update_config()
             return
+        if self.miscellaneous._append(file_path):
+            self.miscellaneous._update_config()
+            return
         # TODO: Add covariates here
 
         # TODO
@@ -184,6 +194,7 @@ class GCBMSimulation:
             # Also update the dict
             self.files[file_path] = data
 
+    # TODO (@ankitaS11): We can just have these as class methods later, this will reduce the redundancy in the code later
     def update_disturbance_config(self):
         self.disturbances._update_config()
 
@@ -195,6 +206,12 @@ class GCBMSimulation:
 
     def set_classifier_attributes(self, file, payload):
         self.classifiers.setattr(file, payload)
+
+    def update_miscellaneous_config(self):
+        self.miscellaneous._update_config()
+
+    def set_miscellaneous_attributes(self, file, payload):
+        self.miscellaneous.setattr(file, payload)
 
     @staticmethod
     def safe_read_json(path):
@@ -214,6 +231,7 @@ if __name__ == "__main__":
     sim = GCBMSimulation()
     sim.add_file("disturbances/disturbances_2011_moja.tiff")
     sim.add_file("classifiers/classifier1_moja.tiff")
+    sim.add_file("miscellaneous/initial_age_moja.tiff")
     # this^ generates disturbances_2011_moja.json file, which will contain the metadata from .tiff
 
     # Sample payload to test
@@ -226,3 +244,4 @@ if __name__ == "__main__":
     }
     sim.set_disturbance_attributes("disturbances/disturbances_2011_moja.tiff", payload)
     sim.set_classifier_attributes("classifiers/classifier1_moja.tiff", payload)
+    sim.set_miscellaneous_attributes("miscellaneous/initial_age_moja.tiff", payload)
