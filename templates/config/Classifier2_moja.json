@@ -9,10 +9,9 @@
     "layer_type": "GridLayer",
     "layer_data": "Byte",
     "attributes": {
-        "1": {
-            "year": 2011,
-            "disturbance_type": "Wildfire",
-            "transition": 1
-        }
+        "1": "5",
+        "2": "6",
+        "3": "7",
+        "4": "8"
     }
 }

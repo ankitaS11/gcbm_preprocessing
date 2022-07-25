@@ -1,0 +1,14 @@
+{
+  "attributes": {
+    "1": {
+      "year": 2013,
+      "disturbance_type": "Mountain pine beetle — Very severe impact",
+      "transition": 1,
+    },
+    "2": {
+      "year": 2013,
+      "disturbance_type": "Wildfire",
+      "transition": 1,
+    }
+  }
+}

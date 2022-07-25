@@ -26,18 +26,27 @@ The outputs for classifier file and disturbance file will be stored in "template
 
 ### GCBM Pre-Processing
 
-Run: `python3 gcbm.py disturbances/disturbances_2011_moja.tiff` and a folder will be generated with the output config file (JSON)
+Run: `python3 gcbm.py` and a folder will be generated with the output config files (JSON) for all the categories.
 
 Script:
 
 ```bash
 pip install -r requirements.txt
-python3 gcbm.py disturbances/disturbances_2011_moja.tiff
+python3 gcbm.py
 cat templates/config/disturbances_2011_moja.json
+cat templates/config/Classifier1_moja.json
 ```
 
 Please see the `main` function in the `gcbm.py` file for more info. A payload is manually added, which checks if it has year and then the `has_year` key is set to `True`
 
-## TODOs
+## Validation
 
-There are a lot of in-line TODOs, this is the first draft to see how we can implement this the most pythonic way.
+In order to make sure that the generated configs are correct, I've written a script `compare_jsons.py`. Pass the original folder first and the new folder second if you want (else the default paths are used).
+
+```bash
+>>> python3 compare_jsons.py compare templates/config/
+
+Note: using compare for original JSONs and templates/config for new JSONs folders.
+Failures: 0/11
+Success: 11/11
+```

@@ -1,11 +1,11 @@
 {
     "cellLatSize": 0.00025,
     "cellLonSize": 0.00025,
-    "nodata": 32767.0,
+    "nodata": 3.4e+38,
     "blockLonSize": 0.1,
     "blockLatSize": 0.1,
     "tileLatSize": 1.0,
     "tileLonSize": 1.0,
     "layer_type": "GridLayer",
-    "layer_data": "Int16"
+    "layer_data": "Float32"
 }
